@@ -1,0 +1,96 @@
+<!-- dashboard.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Recommendation Engine</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 8px;
+        }
+        .recommendations {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        input, select {
+            padding: 10px;
+            margin: 10px 5px;
+            width: 200px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛍️ Product Recommendation Engine</h1>
+    
+    <div>
+        <h2>Get Recommendations</h2>
+        <select id="recType">
+            <option value="similar">Similar Products</option>
+            <option value="user">User Recommendations</option>
+            <option value="trending">Trending Products</option>
+        </select>
+        <input type="text" id="inputId" placeholder="Enter Product/User ID">
+        <button onclick="getRecommendations()">Get Recommendations</button>
+    </div>
+    
+    <div id="results" class="recommendations"></div>
+    
+    <script>
+        async function getRecommendations() {
+            const type = document.getElementById('recType').value;
+            const id = document.getElementById('inputId').value;
+            const resultsDiv = document.getElementById('results');
+            
+            let url = '';
+            if (type === 'similar') {
+                url = `http://localhost:5000/api/recommendations/similar/${id}?limit=12`;
+            } else if (type === 'user') {
+                url = `http://localhost:5000/api/recommendations/user/${id}?limit=12`;
+            } else if (type === 'trending') {
+                url = `http://localhost:5000/api/recommendations/trending?limit=12`;
+            }
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const products = data.recommendations || data.trending || [];
+                
+                resultsDiv.innerHTML = products.map(p => `
+                    <div class="product-card">
+                        <h3>${p.title}</h3>
+                        <p><strong>Category:</strong> ${p.category}</p>
+                        <p><strong>Brand:</strong> ${p.brand}</p>
+                        <p><strong>Price:</strong> $${p.price}</p>
+                        <p><strong>Rating:</strong> ${p.rating} ⭐ (${p.num_reviews} reviews)</p>
+                        <p><strong>Popularity:</strong> ${p.popularity_score}</p>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
